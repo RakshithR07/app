@@ -6,9 +6,6 @@ import mysql.connector
 from mysql.connector import Error
 import json
 from datetime import datetime, timedelta
-import emergentintegrations
-from emergentintegrations import EmergentLLM
-
 # Load environment variables
 load_dotenv()
 
@@ -25,12 +22,14 @@ db_config = {
 }
 
 # Initialize Emergent LLM client
+llm_client = None
 try:
+    from emergentintegrations import EmergentLLM
     llm_client = EmergentLLM()
     print("✅ Emergent LLM client initialized successfully")
 except Exception as e:
     print(f"❌ Failed to initialize Emergent LLM client: {e}")
-    llm_client = None
+    print("Using fallback responses for chat functionality")
 
 def get_db_connection():
     """Get database connection"""
