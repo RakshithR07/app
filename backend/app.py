@@ -24,9 +24,17 @@ db_config = {
 # Initialize Emergent LLM client
 llm_client = None
 try:
-    from emergentintegrations import EmergentLLM
-    llm_client = EmergentLLM()
-    print("✅ Emergent LLM client initialized successfully")
+    import litellm
+    # Set up the Emergent LLM key
+    emergent_key = os.getenv('EMERGENT_LLM_KEY')
+    if emergent_key:
+        # Use LiteLLM with Emergent key for Gemini
+        litellm.api_key = emergent_key
+        litellm.api_base = "https://api.emergentagent.com/v1"
+        llm_client = litellm
+        print("✅ Emergent LLM client initialized successfully")
+    else:
+        print("❌ EMERGENT_LLM_KEY not found in environment")
 except Exception as e:
     print(f"❌ Failed to initialize Emergent LLM client: {e}")
     print("Using fallback responses for chat functionality")
