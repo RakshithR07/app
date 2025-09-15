@@ -7,11 +7,12 @@ import { Input } from "../components/ui/input";
 import { Checkbox } from "../components/ui/checkbox";
 import { Badge } from "../components/ui/badge";
 import { MapPin, Plane, Car, Star, Info } from "lucide-react";
-import { searchResults, filterOptions } from "../data/mockData";
+import { filterOptions } from "../data/mockData";
 
 const SearchResults = () => {
   const [searchParams] = useSearchParams();
   const [results, setResults] = useState([]);
+  const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({
     sortBy: "price-low",
     memberReviews: "all",
@@ -23,8 +24,64 @@ const SearchResults = () => {
   const destination = searchParams.get('destination') || 'San Francisco';
 
   useEffect(() => {
-    // Simulate API call with mock data
-    setResults(searchResults.packages);
+    const fetchSearchResults = async () => {
+      try {
+        // Check if results are already passed via URL params
+        const urlResults = searchParams.get('results');
+        if (urlResults) {
+          const parsedResults = JSON.parse(urlResults);
+          setResults(parsedResults.results || []);
+          setLoading(false);
+          return;
+        }
+
+        // Otherwise fetch from API
+        const searchData = {
+          type: searchType,
+          destination: destination,
+          departure: searchParams.get('departure') || '',
+          return: searchParams.get('return') || '',
+          rooms: searchParams.get('rooms') || '1',
+          adults: searchParams.get('adults') || '2',
+          children: searchParams.get('children') || '0',
+          flyingFrom: searchParams.get('flyingFrom') || '',
+          class: searchParams.get('class') || 'Any'
+        };
+
+        const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/search`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(searchData)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setResults(data.results || []);
+        } else {
+          console.error('Failed to fetch search results');
+          // Fallback to mock data
+          setResults([
+            {
+              id: 1,
+              title: "San Francisco: Your Way Hotel and Airfare Package",
+              image: "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=400&h=300&fit=crop&q=80",
+              priceStatus: "Not Available",
+              adjustText: "Adjust Your Search"
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Search results error:', error);
+        // Fallback data
+        setResults([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSearchResults();
   }, [searchParams]);
 
   const handleFilterChange = (filterType, value) => {
@@ -33,6 +90,57 @@ const SearchResults = () => {
       [filterType]: value
     }));
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        {/* Search Header */}
+        <div className="bg-blue-900 text-white py-6">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-2xl font-bold">{destination}</h1>
+                <p className="text-blue-200">Loading search results...</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1">
+              <Card className="animate-pulse">
+                <CardContent className="p-6">
+                  <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                  <div className="space-y-4">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-4 bg-gray-200 rounded"></div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <div className="lg:col-span-3">
+              <div className="space-y-6">
+                {[1, 2, 3].map(i => (
+                  <Card key={i} className="animate-pulse">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-0">
+                      <div className="w-full h-48 bg-gray-200"></div>
+                      <div className="md:col-span-2 p-6">
+                        <div className="h-6 bg-gray-200 rounded mb-4"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-2"></div>
+                        <div className="h-4 bg-gray-200 rounded mb-4"></div>
+                      </div>
+                    </div>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -181,10 +289,12 @@ const SearchResults = () => {
                                 <Plane className="w-4 h-4 mr-1" />
                                 {result.includes[0]}
                               </div>
-                              <div className="flex items-center text-blue-600 text-sm">
-                                <Car className="w-4 h-4 mr-1" />
-                                {result.includes[1]}
-                              </div>
+                              {result.includes[1] && (
+                                <div className="flex items-center text-blue-600 text-sm">
+                                  <Car className="w-4 h-4 mr-1" />
+                                  {result.includes[1]}
+                                </div>
+                              )}
                             </div>
                           )}
 
@@ -217,7 +327,7 @@ const SearchResults = () => {
                                 </span>
                               </div>
                             ) : (
-                              <p className="text-sm text-gray-500 mt-1">{result.reviewText}</p>
+                              <p className="text-sm text-gray-500 mt-1">{result.reviewText || "Not enough reviews to display yet!"}</p>
                             )}
                           </div>
 
@@ -235,7 +345,7 @@ const SearchResults = () => {
 
                         {/* Price Section */}
                         <div className="text-right ml-4">
-                          <div className="text-red-500 font-medium mb-2">
+                          <div className={`font-medium mb-2 ${result.priceStatus === 'Not Available' ? 'text-red-500' : 'text-green-600'}`}>
                             {result.priceStatus}
                           </div>
                           <Button 
@@ -253,7 +363,7 @@ const SearchResults = () => {
               ))}
             </div>
 
-            {results.length === 0 && (
+            {results.length === 0 && !loading && (
               <div className="text-center py-12">
                 <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-gray-700 mb-2">No results found</h3>
