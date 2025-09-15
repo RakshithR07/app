@@ -25,10 +25,41 @@ const SearchWidget = () => {
 
   const navigate = useNavigate();
 
-  const handleSearch = () => {
-    // Navigate to search results with search parameters
-    const searchParams = new URLSearchParams(searchData);
-    navigate(`/search?${searchParams.toString()}&type=${activeTab}`);
+  const handleSearch = async () => {
+    try {
+      const searchParams = {
+        type: activeTab,
+        ...searchData
+      };
+      
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(searchParams)
+      });
+      
+      if (response.ok) {
+        const results = await response.json();
+        // Navigate to search results with the API results
+        const searchParams_url = new URLSearchParams({
+          ...searchData,
+          type: activeTab,
+          results: JSON.stringify(results)
+        });
+        navigate(`/search?${searchParams_url.toString()}`);
+      } else {
+        // Fallback navigation for errors
+        const searchParams_url = new URLSearchParams({...searchData, type: activeTab});
+        navigate(`/search?${searchParams_url.toString()}`);
+      }
+    } catch (error) {
+      console.error('Search error:', error);
+      // Fallback navigation
+      const searchParams_url = new URLSearchParams({...searchData, type: activeTab});
+      navigate(`/search?${searchParams_url.toString()}`);
+    }
   };
 
   const handleInputChange = (field, value) => {
