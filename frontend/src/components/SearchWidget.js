@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "./ui/select";
-import { Calendar, MapPin, Plane, Car, Ship, Suitcase } from "lucide-react";
+import { Calendar, MapPin, Plane, Car, Ship, Luggage } from "lucide-react";
 import { Checkbox } from "./ui/checkbox";
 
 const SearchWidget = () => {
