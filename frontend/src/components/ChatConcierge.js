@@ -58,7 +58,7 @@ const ChatConcierge = () => {
     }, 1500);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (!currentMessage.trim()) return;
 
     const userMessage = {
@@ -70,9 +70,46 @@ const ChatConcierge = () => {
 
     setMessages(prev => [...prev, userMessage]);
     setCurrentMessage("");
+    setIsTyping(true);
     
-    // Simulate AI response
-    simulateAIResponse(currentMessage);
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/api/chat`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: null, // Anonymous user for now
+          session_id: null, // Let backend create session
+          message: currentMessage
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        
+        setMessages(prev => [...prev, {
+          id: Date.now(),
+          sender: 'ai',
+          message: data.response,
+          timestamp: new Date()
+        }]);
+
+        // If search results are returned, you could show them or navigate
+        if (data.search_results && data.search_results.length > 0) {
+          console.log('Search results from AI:', data.search_results);
+          // Optionally navigate to search results or show them in chat
+        }
+      } else {
+        throw new Error('API request failed');
+      }
+    } catch (error) {
+      console.error('Chat API error:', error);
+      // Fallback to simple response
+      simulateAIResponse(currentMessage);
+    } finally {
+      setIsTyping(false);
+    }
   };
 
   const handleKeyPress = (e) => {
