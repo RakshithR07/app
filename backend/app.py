@@ -421,11 +421,12 @@ Latest user message is: "{new_message}"
         
         if llm_client:
             try:
-                ai_response = llm_client.complete(
-                    prompt=gemini_prompt,
-                    model="gemini-1.5-pro-latest",
+                response = llm_client.completion(
+                    model="gemini/gemini-1.5-pro",
+                    messages=[{"role": "user", "content": gemini_prompt}],
                     max_tokens=500
-                ).strip()
+                )
+                ai_response = response.choices[0].message.content.strip()
                 
                 # Check if response is JSON (complete search params)
                 try:
@@ -448,7 +449,7 @@ Latest user message is: "{new_message}"
                     
             except Exception as e:
                 print(f"❌ Gemini API error: {e}")
-                ai_response = "I'm here to help you plan your perfect trip! Could you tell me where you'd like to go?"
+                ai_response = generate_fallback_response(new_message, current_search_params)
         else:
             # Fallback response when Gemini is not available
             ai_response = generate_fallback_response(new_message, current_search_params)
