@@ -39,7 +39,7 @@ const SearchWidget = () => {
   };
 
   const tabs = [
-    { id: "packages", label: "Packages", icon: Suitcase },
+    { id: "packages", label: "Packages", icon: Luggage },
     { id: "hotels", label: "Hotels", icon: MapPin },
     { id: "cruises", label: "Cruises", icon: Ship },
     { id: "rental-cars", label: "Rental Cars", icon: Car }
